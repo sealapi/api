@@ -1,0 +1,47 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  .app{min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem 1rem;font-family:'Nunito',sans-serif}
+  .title{font-size:30px;font-weight:600;color:var(--color-text-primary);text-align:center;letter-spacing:-0.3px}
+  .sub{font-size:13px;font-weight:300;color:var(--color-text-secondary);margin-top:5px;text-align:center;letter-spacing:0.08em}
+  .frame{width:100%;max-width:480px;aspect-ratio:4/3;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);overflow:hidden;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;position:relative}
+  .frame img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity 0.4s ease}
+  .btn{font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--color-text-primary);background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:10px 28px;cursor:pointer;transition:background 0.15s,transform 0.1s;letter-spacing:0.03em}
+  .btn:hover{background:var(--color-background-secondary)}
+  .btn:active{transform:scale(0.97)}
+  .caption{font-size:12px;font-weight:300;color:var(--color-text-secondary);min-height:16px;text-align:center;letter-spacing:0.06em}
+</style>
+<div class="app">
+  <div><div class="title">the seal api</div><div class="sub">random seal images on demand</div></div>
+  <div class="frame"><img id="img" alt="a seal"/></div>
+  <div class="caption" id="cap">loading...</div>
+  <button class="btn" onclick="next()">new seal ↺</button>
+</div>
+<script>
+const seals = [
+  ["https://live.staticflickr.com/3085/2852254898_47d98f2f0a_b.jpg","harbour seal"],
+  ["https://live.staticflickr.com/7377/9660614019_9e7d04a225_b.jpg","grey seal"],
+  ["https://live.staticflickr.com/7211/7175958641_ea7e4ceaf9_b.jpg","elephant seal"],
+  ["https://live.staticflickr.com/5538/9485531568_6f1e7a2c75_b.jpg","leopard seal"],
+  ["https://live.staticflickr.com/3931/15361617756_b5e0e92f1b_b.jpg","harp seal pup"],
+  ["https://live.staticflickr.com/1524/26506310553_48e1f2ca17_b.jpg","weddell seal"],
+  ["https://live.staticflickr.com/8069/8218124580_e81a3e1ed4_b.jpg","fur seal"],
+  ["https://live.staticflickr.com/7378/9321870895_5c08f04a93_b.jpg","ringed seal"],
+];
+let last=-1;
+function next(){
+  const img=document.getElementById('img');
+  const cap=document.getElementById('cap');
+  img.style.opacity=0;
+  cap.textContent='loading...';
+  let i;
+  do{i=Math.floor(Math.random()*seals.length)}while(i===last&&seals.length>1);
+  last=i;
+  const t=new Image();
+  t.onload=()=>{img.src=t.src;img.style.opacity=1;cap.textContent=seals[i][1];};
+  t.onerror=()=>{cap.textContent='seal escaped — try again';};
+  t.src=seals[i][0];
+}
+next();
+</script>
