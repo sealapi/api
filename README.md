@@ -1,10 +1,10 @@
-# 🦭 the seal api
+#the seal api
 
 A simple, beautiful webpage that displays a random seal image every time you visit — inspired by the Cat API.
 
 ## demo
 
-Live at: `https://YOUR-USERNAME.github.io/seal-api`
+Live at: `https://seal.github.io`
 
 ## features
 
