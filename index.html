@@ -25,7 +25,7 @@
     .title {
       font-size: 30px;
       font-weight: 600;
-      color: #ffffff;
+      color: #fff;
       text-align: center;
       letter-spacing: -0.3px;
       opacity: 0;
@@ -48,7 +48,7 @@
       max-width: 480px;
       aspect-ratio: 4/3;
       border-radius: 12px;
-      border: 0.5px solid #e0e0e0;
+      border: 0.5px solid #333;
       overflow: hidden;
       background: #111;
       display: flex;
@@ -66,6 +66,15 @@
       display: block;
       transition: opacity 0.5s ease;
     }
+    .spinner {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #333;
+      border-top-color: #888;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
     .caption {
       font-size: 12px;
       font-weight: 300;
@@ -80,7 +89,7 @@
       font-family: 'Nunito', sans-serif;
       font-size: 15px;
       font-weight: 600;
-      color: #ffffff;
+      color: #fff;
       background: #111;
       border: 0.5px solid #444;
       border-radius: 8px;
@@ -96,6 +105,7 @@
     @keyframes fadeDown { to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeUp   { to { opacity: 1; transform: translateY(0); } }
     @keyframes frameIn  { to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes spin     { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -104,30 +114,89 @@
       <div class="title">the seal api</div>
       <div class="sub">random seal images on demand</div>
     </div>
-    <div class="frame"><img id="img" alt="a seal" /></div>
-    <div class="caption" id="cap">loading...</div>
-    <button class="btn" onclick="next()">new seal ↺</button>
+    <div class="frame">
+      <div class="spinner" id="spinner"></div>
+      <img id="img" alt="a seal" style="opacity:0" />
+    </div>
+    <div class="caption" id="cap"></div>
+    <button class="btn" onclick="loadSeal()">new seal ↺</button>
   </div>
 
   <script>
-    const queries = ["harbour seal","grey seal","elephant seal","leopard seal","harp seal","weddell seal","fur seal","ringed seal"];
-    let last = -1;
-    function next() {
+    const categories = [
+      "Phoca_vitulina",
+      "Halichoerus_grypus",
+      "Mirounga",
+      "Hydrurga_leptonyx",
+      "Pagophilus_groenlandicus",
+      "Leptonychotes_weddellii",
+      "Callorhinus_ursinus",
+      "Pusa_hispida",
+    ];
+    const names = [
+      "harbour seal","grey seal","elephant seal","leopard seal",
+      "harp seal","weddell seal","northern fur seal","ringed seal"
+    ];
+    let lastIdx = -1;
+
+    async function fetchPool(category) {
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${category}&cmtype=file&cmlimit=30&cmnamespace=6&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return (data.query?.categorymembers || [])
+        .map(f => f.title)
+        .filter(t => /\.(jpg|jpeg|png)$/i.test(t));
+    }
+
+    async function getImageUrl(title) {
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=800&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = data.query?.pages || {};
+      const page = Object.values(pages)[0];
+      return page?.imageinfo?.[0]?.thumburl || null;
+    }
+
+    async function loadSeal() {
       const img = document.getElementById('img');
       const cap = document.getElementById('cap');
+      const spinner = document.getElementById('spinner');
+
       img.style.opacity = 0;
-      cap.textContent = 'loading...';
-      let i;
-      do { i = Math.floor(Math.random() * queries.length); } while (i === last && queries.length > 1);
-      last = i;
-      const query = queries[i].replace(/ /g, '%20');
-      const src = `https://source.unsplash.com/featured/800x600/?${query}&sig=${Date.now()}`;
-      const t = new Image();
-      t.onload = () => { img.src = t.src; img.style.opacity = 1; cap.textContent = queries[i]; };
-      t.onerror = () => { cap.textContent = 'seal escaped — try again'; };
-      t.src = src;
+      spinner.style.display = 'block';
+      cap.textContent = 'fetching seal...';
+
+      let idx;
+      do { idx = Math.floor(Math.random() * categories.length); }
+      while (idx === lastIdx && categories.length > 1);
+      lastIdx = idx;
+
+      try {
+        const files = await fetchPool(categories[idx]);
+        if (!files.length) throw new Error('no files');
+        const file = files[Math.floor(Math.random() * files.length)];
+        const imageUrl = await getImageUrl(file);
+        if (!imageUrl) throw new Error('no url');
+
+        const t = new Image();
+        t.onload = () => {
+          img.src = t.src;
+          img.style.opacity = 1;
+          spinner.style.display = 'none';
+          cap.textContent = names[idx];
+        };
+        t.onerror = () => {
+          spinner.style.display = 'none';
+          cap.textContent = 'seal escaped — try again';
+        };
+        t.src = imageUrl;
+      } catch (e) {
+        spinner.style.display = 'none';
+        cap.textContent = 'seal escaped — try again';
+      }
     }
-    next();
+
+    loadSeal();
   </script>
 </body>
 </html>
